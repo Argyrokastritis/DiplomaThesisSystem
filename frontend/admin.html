@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel - Γραμματεία</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+    h2 { color: #333; }
+    .section { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #eee; }
+    input, textarea, button { margin-top: 8px; padding: 8px; width: 100%; box-sizing: border-box; }
+    button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+  </style>
+</head>
+<body>
+
+  <h2>📋 Πίνακας Διπλωματικών</h2>
+  <div class="section">
+    <table id="thesisTable">
+      <thead>
+        <tr>
+          <th>Φοιτητής</th>
+          <th>Τίτλος</th>
+          <th>Καθηγητής</th>
+          <th>Κατάσταση</th>
+          <th>Ενέργειες</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Θα γεμίσει δυναμικά -->
+      </tbody>
+    </table>
+  </div>
+
+  <h2>📝 Καταχώρηση Αριθμού Πρακτικού</h2>
+  <div class="section">
+    <form id="protocolForm">
+      <input type="text" id="studentId" placeholder="ID Φοιτητή" required>
+      <input type="text" id="protocolNumber" placeholder="Αριθμός Πρακτικού" required>
+      <button type="submit">Καταχώρηση</button>
+    </form>
+  </div>
+
+  <h2>📦 Ολοκλήρωση Διπλωματικής</h2>
+  <div class="section">
+    <form id="completeForm">
+      <input type="text" id="completeStudentId" placeholder="ID Φοιτητή" required>
+      <button type="submit">Ολοκλήρωση</button>
+    </form>
+  </div>
+
+  <h2>📥 Εισαγωγή Δεδομένων από JSON</h2>
+  <div class="section">
+    <form id="importForm">
+      <textarea id="jsonData" placeholder='{"student":"Γιάννης", "title":"AI και Εκπαίδευση", ...}' required></textarea>
+      <button type="submit">Εισαγωγή</button>
+    </form>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token'); // Αν έχεις authentication
+
+    async function loadTheses() {
+      const res = await fetch('http://localhost:5000/api/admin/theses', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const tbody = document.querySelector('#thesisTable tbody');
+      tbody.innerHTML = '';
+      data.forEach(thesis => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${thesis.student}</td>
+          <td>${thesis.title}</td>
+          <td>${thesis.supervisor}</td>
+          <td>${thesis.status}</td>
+          <td><button onclick="viewDetails('${thesis.id}')">Προβολή</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    async function viewDetails(id) {
+      alert(`Λεπτομέρειες για διπλωματική ID: ${id}`);
+      // Μπορείς να προσθέσεις modal ή redirect
+    }
+
+    document.getElementById('protocolForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch('http://localhost:5000/api/admin/set-protocol', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          studentId: studentId.value,
+          protocolNumber: protocolNumber.value
+        })
+      });
+      alert(res.ok ? '✅ Καταχωρήθηκε!' : '❌ Σφάλμα');
+    });
+
+    document.getElementById('completeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch('http://localhost:5000/api/admin/complete-thesis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ studentId: completeStudentId.value })
+      });
+      alert(res.ok ? '✅ Ολοκληρώθηκε!' : '❌ Σφάλμα');
+    });
+
+    document.getElementById('importForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const json = JSON.parse(jsonData.value);
+        const res = await fetch('http://localhost:5000/api/admin/import-thesis', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(json)
+        });
+        alert(res.ok ? '✅ Εισαγωγή επιτυχής!' : '❌ Σφάλμα');
+      } catch (err) {
+        alert('❌ Μη έγκυρο JSON');
+      }
+    });
+
+    loadTheses();
+  </script>
+
+</body>
+</html>
