@@ -5,27 +5,101 @@
   <title>Φοιτητής - Πίνακας Ελέγχου</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: Arial; padding: 20px; max-width: 800px; margin: auto; background-color: #f9f9f9; }
-    h2 { color: #333; }
-    .topic, .thesis { background: #fff; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; }
-    button { padding: 8px 12px; margin-top: 5px; }
-    .section { margin-bottom: 40px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e9efff 0%, #f0f2f5 100%);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 850px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(24, 119, 242, 0.08);
+      padding: 36px 32px 32px 32px;
+    }
+    h2 {
+      color: #1877f2;
+      font-size: 2.2rem;
+      margin-bottom: 32px;
+      font-weight: bold;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .section {
+      margin-bottom: 48px;
+    }
+    h3 {
+      color: #145db2;
+      font-size: 1.3rem;
+      margin-bottom: 18px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+    .topic, .thesis {
+      background: #f5f6fa;
+      padding: 18px 20px;
+      margin-top: 14px;
+      border-radius: 8px;
+      border: 1px solid #e4e6eb;
+      box-shadow: 0 2px 8px rgba(24, 119, 242, 0.04);
+      transition: box-shadow 0.2s;
+    }
+    .topic:hover {
+      box-shadow: 0 4px 16px rgba(24, 119, 242, 0.10);
+      border-color: #1877f2;
+    }
+    .thesis {
+      border-left: 5px solid #42b72a;
+    }
+    button {
+      background: #1877f2;
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 18px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+      box-shadow: 0 2px 6px rgba(24, 119, 242, 0.08);
+    }
+    button:hover {
+      background: #145db2;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 16px 8px;
+      }
+      h2 {
+        font-size: 1.4rem;
+      }
+      h3 {
+        font-size: 1rem;
+      }
+      .topic, .thesis {
+        padding: 12px 8px;
+      }
+    }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h2>🎓 Πίνακας Ελέγχου Φοιτητή</h2>
 
-  <h2>🎓 Πίνακας Ελέγχου Φοιτητή</h2>
+    <div class="section">
+      <h3>📋 Διαθέσιμα Θέματα Διπλωματικής</h3>
+      <div id="availableTopics"></div>
+    </div>
 
-  <div class="section">
-    <h3>📋 Διαθέσιμα Θέματα Διπλωματικής</h3>
-    <div id="availableTopics"></div>
+    <div class="section">
+      <h3>📄 Η Διπλωματική μου</h3>
+      <div id="myThesis"></div>
+    </div>
   </div>
-
-  <div class="section">
-    <h3>📄 Η Διπλωματική μου</h3>
-    <div id="myThesis"></div>
-  </div>
-
   <script>
     const token = localStorage.getItem('token');
     if (!token) {
@@ -48,7 +122,8 @@
         const div = document.createElement('div');
         div.className = 'topic';
         div.innerHTML = `
-          <strong>${t.title}</strong><br>${t.summary}<br>
+          <strong style="color:#1877f2;font-size:1.1rem;">${t.title}</strong><br>
+          <span style="color:#444;">${t.summary}</span><br>
           <button onclick="applyForTopic('${t._id}')">Αίτηση για Ανάληψη</button>
         `;
         availableTopics.appendChild(div);
@@ -80,19 +155,16 @@
         const thesis = await res.json();
         myThesis.innerHTML = `
           <div class="thesis">
-            <strong>Θέμα:</strong> ${thesis.topic.title}<br>
+            <strong style="color:#42b72a;font-size:1.1rem;">Θέμα:</strong> ${thesis.topic.title}<br>
             <strong>Καθηγητής:</strong> ${thesis.instructor.name}<br>
             <strong>Κατάσταση:</strong> ${thesis.status}<br>
           </div>
         `;
       } else {
-        myThesis.innerHTML = 'Δεν έχεις αναλάβει διπλωματική.';
+        myThesis.innerHTML = '<div class="thesis" style="color:#888;">Δεν έχεις αναλάβει διπλωματική.</div>';
       }
     }
 
     loadTopics();
     loadMyThesis();
   </script>
-
-</body>
-</html>
