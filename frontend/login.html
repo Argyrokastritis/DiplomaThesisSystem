@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>Σύνδεση</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 400px; margin: auto; }
+    input, button { width: 100%; padding: 10px; margin: 5px 0; }
+  </style>
+</head>
+<body>
+
+  <h2>🔑 Σύνδεση Χρήστη</h2>
+  <form id="loginForm">
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Κωδικός" required>
+    <button type="submit">Σύνδεση</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('loginForm');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const credentials = {
+        email: form.email.value,
+        password: form.password.value
+      };
+
+      const res = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials)
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('role', data.role);
+        alert('✅ Σύνδεση επιτυχής!');
+
+        if (data.role === 'instructor') {
+          window.location.href = 'instructor.html';
+        } else {
+          window.location.href = 'student.html';
+        }
+      } else {
+        alert('❌ Σφάλμα σύνδεσης');
+      }
+    });
+  </script>
+
+</body>
+</html>

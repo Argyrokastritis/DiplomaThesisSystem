@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>Εγγραφή Χρήστη</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 500px; margin: auto; }
+    input, select, button { width: 100%; padding: 10px; margin: 5px 0; }
+  </style>
+</head>
+<body>
+
+  <h2>➕ Εγγραφή Χρήστη</h2>
+  <form id="registerForm">
+    <select id="role" required>
+      <option value="">Επιλέξτε Ρόλο</option>
+      <option value="student">Φοιτητής</option>
+      <option value="instructor">Καθηγητής</option>
+    </select>
+    <input type="text" id="name" placeholder="Ονοματεπώνυμο" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Κωδικός" required>
+    <input type="text" id="phone" placeholder="Τηλέφωνο">
+    <input type="text" id="address" placeholder="Διεύθυνση">
+    <button type="submit">Εγγραφή</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('registerForm');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = {
+        role: form.role.value,
+        name: form.name.value,
+        email: form.email.value,
+        password: form.password.value,
+        phone: form.phone.value,
+        address: form.address.value
+      };
+
+      const res = await fetch('http://localhost:5000/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user)
+      });
+
+      if (res.ok) {
+        alert('✅ Εγγραφή επιτυχής! Μεταφορά στη σελίδα σύνδεσης...');
+        window.location.href = 'login.html';
+      } else {
+        alert('❌ Σφάλμα κατά την εγγραφή');
+      }
+    });
+  </script>
+
+</body>
+</html>

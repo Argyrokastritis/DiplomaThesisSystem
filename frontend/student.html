@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>Φοιτητής - Πίνακας Ελέγχου</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 800px; margin: auto; background-color: #f9f9f9; }
+    h2 { color: #333; }
+    .topic, .thesis { background: #fff; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; }
+    button { padding: 8px 12px; margin-top: 5px; }
+    .section { margin-bottom: 40px; }
+  </style>
+</head>
+<body>
+
+  <h2>🎓 Πίνακας Ελέγχου Φοιτητή</h2>
+
+  <div class="section">
+    <h3>📋 Διαθέσιμα Θέματα Διπλωματικής</h3>
+    <div id="availableTopics"></div>
+  </div>
+
+  <div class="section">
+    <h3>📄 Η Διπλωματική μου</h3>
+    <div id="myThesis"></div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Πρέπει να συνδεθείτε πρώτα.');
+      window.location.href = 'login.html';
+    }
+
+    const availableTopics = document.getElementById('availableTopics');
+    const myThesis = document.getElementById('myThesis');
+
+    // GET διαθέσιμα θέματα
+    async function loadTopics() {
+      const res = await fetch('http://localhost:5000/api/students/topics', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const topics = await res.json();
+
+      availableTopics.innerHTML = '';
+      topics.forEach(t => {
+        const div = document.createElement('div');
+        div.className = 'topic';
+        div.innerHTML = `
+          <strong>${t.title}</strong><br>${t.summary}<br>
+          <button onclick="applyForTopic('${t._id}')">Αίτηση για Ανάληψη</button>
+        `;
+        availableTopics.appendChild(div);
+      });
+    }
+
+    // POST αίτηση για θέμα
+    async function applyForTopic(topicId) {
+      const res = await fetch(`http://localhost:5000/api/students/apply/${topicId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        alert('✅ Η αίτηση υποβλήθηκε!');
+        loadMyThesis();
+      } else {
+        alert('❌ Σφάλμα στην αίτηση');
+      }
+    }
+
+    // GET διπλωματική φοιτητή
+    async function loadMyThesis() {
+      const res = await fetch('http://localhost:5000/api/students/thesis', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        const thesis = await res.json();
+        myThesis.innerHTML = `
+          <div class="thesis">
+            <strong>Θέμα:</strong> ${thesis.topic.title}<br>
+            <strong>Καθηγητής:</strong> ${thesis.instructor.name}<br>
+            <strong>Κατάσταση:</strong> ${thesis.status}<br>
+          </div>
+        `;
+      } else {
+        myThesis.innerHTML = 'Δεν έχεις αναλάβει διπλωματική.';
+      }
+    }
+
+    loadTopics();
+    loadMyThesis();
+  </script>
+
+</body>
+</html>
