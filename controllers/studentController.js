@@ -1,4 +1,5 @@
 const Student = require('../models/Student');
+const bcrypt = require('bcryptjs'); // προσθήκη
 
 // GET /api/students
 const getStudents = async (req, res) => {
@@ -14,7 +15,8 @@ const getStudents = async (req, res) => {
 const createStudent = async (req, res) => {
   try {
     const { name, email, password, phone, address } = req.body;
-    const newStudent = new Student({ name, email, password, phone, address });
+    const hashedPassword = await bcrypt.hash(password, 10); // hash ο κωδικός
+    const newStudent = new Student({ name, email, password: hashedPassword, phone, address });
     await newStudent.save();
     res.status(201).json(newStudent);
   } catch (error) {

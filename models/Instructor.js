@@ -1,0 +1,12 @@
+const mongoose = require('mongoose');
+
+const instructorSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  phone: String,
+  department: String,
+  office: String
+});
+
+module.exports = mongoose.model('Instructor', instructorSchema);
