@@ -14,6 +14,8 @@ app.use(express.json());
 app.use('/api/students', require('./routes/studentRoutes'));
 app.use('/api/instructors', require('./routes/instructorRoutes'));
 app.use('/api/theses', require('./routes/thesisRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+
 
 
 const PORT = process.env.PORT || 5000;
