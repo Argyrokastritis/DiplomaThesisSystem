@@ -1,5 +1,6 @@
 const Thesis = require('../models/Thesis');
 const Student = require('../models/Student');
+const Invitation = require('../models/Invitation');
 
 const getTopics = async (req, res) => {
   console.log('getTopics called');
@@ -76,6 +77,42 @@ const cancelAssignment = async (req, res) => {
   res.json({ message: 'Ανάθεση ακυρώθηκε' });
 };
 
+const getInvitations = async (req, res) => {
+  try {
+    const invitations = await Invitation.find({
+      instructor: req.user.id,
+      status: 'Pending'
+    }).populate('thesis', 'title').populate('student', 'name email');
+
+    res.json(invitations);
+  } catch (err) {
+    res.status(500).json({ message: 'Σφάλμα ανάκτησης προσκλήσεων', error: err });
+  }
+};
+
+const respondToInvitation = async (req, res) => {
+  const { invitationId, response } = req.body;
+
+  if (!['Accepted', 'Rejected'].includes(response)) {
+    return res.status(400).json({ message: 'Μη έγκυρη απάντηση' });
+  }
+
+  try {
+    const invitation = await Invitation.findById(invitationId);
+    if (!invitation || invitation.instructor.toString() !== req.user.id) {
+      return res.status(404).json({ message: 'Δεν βρέθηκε πρόσκληση' });
+    }
+
+    invitation.status = response;
+    invitation.responseDate = new Date();
+    await invitation.save();
+
+    res.json({ message: `Η πρόσκληση ${response === 'Accepted' ? 'αποδεκτή' : 'απορρίφθηκε'}` });
+  } catch (err) {
+    res.status(500).json({ message: 'Σφάλμα απάντησης', error: err });
+  }
+};
+
 
 module.exports = {
   getTopics,
@@ -83,5 +120,8 @@ module.exports = {
   createTopic,
   assignTopicToStudent,
   cancelAssignment,
-  getAssignments
+  getAssignments,
+  getInvitations,          // ✅ προσθέτουμε αυτό
+  respondToInvitation      // ✅ αν χρησιμοποιείται
 };
+

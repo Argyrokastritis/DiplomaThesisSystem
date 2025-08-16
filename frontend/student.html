@@ -97,8 +97,9 @@
 
     <div class="section">
       <h3>📄 Η Διπλωματική μου</h3>
-      <div id="myThesis"></div>
+      <div id="myThesis">⏳ Φόρτωση...</div>
     </div>
+
   </div>
   <script>
     const token = localStorage.getItem('token');
@@ -147,23 +148,57 @@
 
     // GET διπλωματική φοιτητή
     async function loadMyThesis() {
-      const res = await fetch('http://localhost:5000/api/students/thesis', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+  const res = await fetch('http://localhost:5000/api/students/my-thesis', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-      if (res.ok) {
-        const thesis = await res.json();
-        myThesis.innerHTML = `
-          <div class="thesis">
-            <strong style="color:#42b72a;font-size:1.1rem;">Θέμα:</strong> ${thesis.topic.title}<br>
-            <strong>Καθηγητής:</strong> ${thesis.instructor.name}<br>
-            <strong>Κατάσταση:</strong> ${thesis.status}<br>
-          </div>
-        `;
-      } else {
-        myThesis.innerHTML = '<div class="thesis" style="color:#888;">Δεν έχεις αναλάβει διπλωματική.</div>';
-      }
+  const container = document.getElementById('myThesis');
+  container.innerHTML = '';
+
+  try {
+    const data = await res.json();
+
+    if (res.status === 404 || data.message) {
+      container.innerHTML = `
+        <div class="thesis" style="color:#888;">
+          ❌ Δεν έχεις αναλάβει διπλωματική.
+        </div>
+      `;
+      return;
     }
+
+    container.innerHTML = `
+      <div class="thesis">
+        <strong style="color:#42b72a;font-size:1.1rem;">Θέμα:</strong> ${data.title}<br>
+        <strong>Σύνοψη:</strong> ${data.summary}<br>
+        <strong>Κατάσταση:</strong> ${data.assignmentStatus}<br>
+        <strong>Καθηγητής:</strong> ${data.supervisor?.name || '-'}<br>
+      </div>
+    `;
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<p>❌ Σφάλμα φόρτωσης διπλωματικής.</p>`;
+  }
+}
+
+
+    async function sendInvitation(thesisId, instructorId) {
+    const res = await fetch('http://localhost:5000/api/students/send-invitation', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ thesisId, instructorId })
+  });
+
+  const result = await res.json();
+  if (res.ok) {
+    alert(result.message);
+  } else {
+    alert("❌ " + result.message);
+  }
+}
 
     loadTopics();
     loadMyThesis();

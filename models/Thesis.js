@@ -42,14 +42,12 @@ const thesisSchema = new mongoose.Schema({
     type: String
   },
   assignedTo: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Student' 
+    type: mongoose.Schema.Types.ObjectId, ref: 'Student' 
   },
-  assignmentStatus: {
-  type: String,
-  enum: ['Unassigned', 'Pending', 'Confirmed'],
-  default: 'Unassigned'
-}
+  assignmentStatus: { 
+    type: String, enum: ['Unassigned', 'Pending', 'Confirmed'], default: 'Unassigned'
+  }
+
 
 }, { timestamps: true });
 

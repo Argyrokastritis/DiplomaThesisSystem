@@ -151,6 +151,39 @@
       studentResults.innerHTML = "<p>❌ Σφάλμα κατά την αναζήτηση.</p>";
     }
   }
+  
+  document.getElementById('topicForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const topicForm = e.target;
+  const formData = new FormData();
+  formData.append('title', topicForm.title.value);
+  formData.append('summary', topicForm.summary.value);
+  if (topicForm.pdfFile.files.length > 0) {
+    formData.append('pdf', topicForm.pdfFile.files[0]);
+  }
+
+  try {
+    const res = await fetch('http://localhost:5000/api/instructors/topics', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }, // ❌ χωρίς Content-Type
+      body: formData
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert("✅ Θέμα δημιουργήθηκε!");
+      loadTopics();
+      topicForm.reset();
+    } else {
+      alert("❌ Σφάλμα: " + data.message);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("❌ Πρόβλημα επικοινωνίας με τον server.");
+  }
+});
+
 
   // ✅ Αναζήτηση και με Enter μέσα στο input
   document.getElementById('studentSearch').addEventListener('keypress', function (e) {
