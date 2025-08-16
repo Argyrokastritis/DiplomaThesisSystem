@@ -113,7 +113,6 @@ const respondToInvitation = async (req, res) => {
   }
 };
 
-
 module.exports = {
   getTopics,
   getTheses,

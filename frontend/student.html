@@ -105,6 +105,8 @@
     <div class="section">
       <h3>📄 Η Διπλωματική μου</h3>
       <div id="myThesis">⏳ Φόρτωση...</div>
+      <button onclick="openCommitteeRequest()">📨 Αίτηση για Τριμελή Επιτροπή</button>
+      <div id="committeeForm" style="display:none; margin-top:20px;"></div>
     </div>
 
   </div>
@@ -117,6 +119,62 @@
 
     const availableTopics = document.getElementById('availableTopics');
     const myThesis = document.getElementById('myThesis');
+    
+    function openCommitteeRequest() {
+  const form = document.getElementById('committeeForm');
+  form.style.display = 'block';
+  loadInstructors();
+}
+
+async function loadInstructors() {
+  const res = await fetch('http://localhost:5000/api/students/instructors', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const instructors = await res.json();
+  const form = document.getElementById('committeeForm');
+  form.innerHTML = '<strong>Επιλέξτε καθηγητές:</strong><br>';
+
+  instructors.forEach(inst => {
+    form.innerHTML += `
+      <label>
+        <input type="checkbox" value="${inst._id}"> ${inst.name} (${inst.email})
+      </label><br>
+    `;
+  });
+
+  form.innerHTML += `<button onclick="submitCommitteeRequest()">📤 Αποστολή Αιτήσεων</button>`;
+}
+
+async function submitCommitteeRequest() {
+  const checkboxes = document.querySelectorAll('#committeeForm input[type="checkbox"]:checked');
+  if (checkboxes.length === 0) {
+    alert('❌ Επιλέξτε τουλάχιστον έναν καθηγητή.');
+    return;
+  }
+
+  const instructorIds = Array.from(checkboxes).map(cb => cb.value);
+
+  const thesisRes = await fetch('http://localhost:5000/api/students/my-thesis', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const thesis = await thesisRes.json();
+
+  for (const instructorId of instructorIds) {
+    await fetch('http://localhost:5000/api/students/send-invitation', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ thesisId: thesis._id, instructorId })
+    });
+  }
+
+  alert('✅ Οι αιτήσεις στάλθηκαν!');
+  document.getElementById('committeeForm').style.display = 'none';
+}
+
 
     // GET διαθέσιμα θέματα
     async function loadTopics() {
@@ -212,13 +270,40 @@ async function loadEditForm() {
   `;
 }
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidPhone(phone) {
+  return /^\d{10}$/.test(phone); // 10 ψηφία για GR κινητό
+}
+
+function isValidLandline(landline) {
+  return /^\d{10}$/.test(landline); // 10 ψηφία για GR σταθερό
+}
+
 async function submitProfileUpdate() {
-  const body = {
-    email: document.getElementById('editEmail').value,
-    phone: document.getElementById('editPhone').value,
-    landline: document.getElementById('editLandline').value,
-    address: document.getElementById('editAddress').value
-  };
+  const email = document.getElementById('editEmail').value.trim();
+  const phone = document.getElementById('editPhone').value.trim();
+  const landline = document.getElementById('editLandline').value.trim();
+  const address = document.getElementById('editAddress').value.trim();
+
+  if (!isValidEmail(email)) {
+    alert('❌ Το email δεν είναι έγκυρο.');
+    return;
+  }
+
+  if (phone && !isValidPhone(phone)) {
+    alert('❌ Το κινητό πρέπει να έχει 10 ψηφία.');
+    return;
+  }
+
+  if (landline && !isValidLandline(landline)) {
+    alert('❌ Το σταθερό πρέπει να έχει 10 ψηφία.');
+    return;
+  }
+
+  const body = { email, phone, landline, address };
 
   const res = await fetch('http://localhost:5000/api/students/profile', {
     method: 'PUT',

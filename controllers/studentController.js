@@ -2,7 +2,17 @@ const Student = require('../models/Student');
 const bcrypt = require('bcryptjs'); // προσθήκη
 const Invitation = require('../models/Invitation');
 const Thesis = require('../models/Thesis');
+const Instructor = require('../models/Instructor');
 
+
+const getInstructors = async (req, res) => {
+  try {
+    const instructors = await Instructor.find().select('name email');
+    res.json(instructors);
+  } catch (err) {
+    res.status(500).json({ message: 'Σφάλμα ανάκτησης καθηγητών', error: err });
+  }
+};
 
 const getMyThesis = async (req, res) => {
   try {
@@ -103,9 +113,23 @@ const updateStudentProfile = async (req, res) => {
   try {
     const { email, phone, landline, address } = req.body;
 
+    // 🔒 Αμυντικός έλεγχος εισόδου
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: 'Μη έγκυρο email.' });
+    }
+
+    if (phone && !/^\d{10}$/.test(phone)) {
+      return res.status(400).json({ message: 'Μη έγκυρο κινητό (10 ψηφία).' });
+    }
+
+    if (landline && !/^\d{10}$/.test(landline)) {
+      return res.status(400).json({ message: 'Μη έγκυρο σταθερό (10 ψηφία).' });
+    }
+
     const student = await Student.findById(req.user.id);
     if (!student) return res.status(404).json({ message: 'Φοιτητής δεν βρέθηκε.' });
 
+    // ✅ Ενημέρωση πεδίων
     if (email) student.email = email;
     if (phone) student.phone = phone;
     if (landline) student.landline = landline;
@@ -114,9 +138,11 @@ const updateStudentProfile = async (req, res) => {
     await student.save();
     res.json({ message: '✅ Το προφίλ ενημερώθηκε επιτυχώς.' });
   } catch (err) {
+    console.error('❌ Σφάλμα ενημέρωσης προφίλ:', err);
     res.status(500).json({ message: '❌ Σφάλμα ενημέρωσης προφίλ.', error: err });
   }
 };
 
 
-module.exports = { getStudents, createStudent,sendInvitation,getMyThesis, getStudentProfile, updateStudentProfile };
+
+module.exports = { getStudents, createStudent,sendInvitation,getMyThesis, getStudentProfile, updateStudentProfile, getInstructors };
