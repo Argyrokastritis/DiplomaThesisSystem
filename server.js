@@ -34,5 +34,12 @@ app.use('/api', require('./routes/authRoutes'));
 
 
 // Εκκίνηση server
+// ...existing code...
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  // Άνοιγμα login.html στον default browser (Windows)
+  const { exec } = require('child_process');
+  exec(`start "" "${__dirname}\\frontend\\login.html"`);
+});
