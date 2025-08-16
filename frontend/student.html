@@ -91,6 +91,13 @@
     <h2>🎓 Πίνακας Ελέγχου Φοιτητή</h2>
 
     <div class="section">
+      <h3 id="welcomeMessage">👋 Καλησπέρα!</h3>
+      <div id="studentProfile">⏳ Φόρτωση στοιχείων...</div>
+      <button onclick="toggleEditProfile()">✏️ Επεξεργασία Προφίλ</button>
+      <div id="editProfileForm" style="display:none; margin-top:20px;"></div>
+    </div>
+
+    <div class="section">
       <h3>📋 Διαθέσιμα Θέματα Διπλωματικής</h3>
       <div id="availableTopics"></div>
     </div>
@@ -181,8 +188,86 @@
   }
 }
 
+function toggleEditProfile() {
+  const form = document.getElementById('editProfileForm');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  loadEditForm();
+}
 
-    async function sendInvitation(thesisId, instructorId) {
+async function loadEditForm() {
+  const res = await fetch('http://localhost:5000/api/students/profile', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const student = await res.json();
+
+  const form = document.getElementById('editProfileForm');
+  form.innerHTML = `
+    <div class="thesis">
+      <label>Email: <input type="email" id="editEmail" value="${student.email}"></label><br>
+      <label>Κινητό: <input type="text" id="editPhone" value="${student.phone || ''}"></label><br>
+      <label>Σταθερό: <input type="text" id="editLandline" value="${student.landline || ''}"></label><br>
+      <label>Διεύθυνση: <input type="text" id="editAddress" value="${student.address || ''}"></label><br>
+      <button onclick="submitProfileUpdate()">💾 Αποθήκευση</button>
+    </div>
+  `;
+}
+
+async function submitProfileUpdate() {
+  const body = {
+    email: document.getElementById('editEmail').value,
+    phone: document.getElementById('editPhone').value,
+    landline: document.getElementById('editLandline').value,
+    address: document.getElementById('editAddress').value
+  };
+
+  const res = await fetch('http://localhost:5000/api/students/profile', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  const result = await res.json();
+  if (res.ok) {
+    alert(result.message);
+    loadStudentProfile();
+    toggleEditProfile();
+  } else {
+    alert('❌ ' + result.message);
+  }
+}
+
+
+async function loadStudentProfile() {
+  const res = await fetch('http://localhost:5000/api/students/profile', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const container = document.getElementById('studentProfile');
+  const welcome = document.getElementById('welcomeMessage');
+
+  try {
+    const student = await res.json();
+
+    welcome.innerHTML = `👋 Καλησπέρα, <strong>${student.name}</strong>!`;
+
+    container.innerHTML = `
+      <div class="thesis">
+        <strong>📧 Email:</strong> ${student.email}<br>
+        <strong>📱 Κινητό:</strong> ${student.phone || '-'}<br>
+        <strong>📞 Σταθερό:</strong> ${student.landline || '-'}<br>
+        <strong>🏠 Διεύθυνση:</strong> ${student.address || '-'}
+      </div>
+    `;
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<p>❌ Σφάλμα φόρτωσης στοιχείων.</p>`;
+  }
+}
+
+  async function sendInvitation(thesisId, instructorId) {
     const res = await fetch('http://localhost:5000/api/students/send-invitation', {
     method: 'POST',
     headers: {
@@ -202,4 +287,5 @@
 
     loadTopics();
     loadMyThesis();
+    loadStudentProfile();
   </script>

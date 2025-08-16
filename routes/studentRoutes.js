@@ -5,10 +5,16 @@ const {
   getStudents,
   createStudent,
   sendInvitation,
-  getMyThesis
+  getMyThesis,
+  getStudentProfile,
+  updateStudentProfile
 } = require('../controllers/studentController');
 
 const Student = require('../models/Student');
+
+router.put('/profile', auth, updateStudentProfile);
+
+router.get('/profile', auth, getStudentProfile);
 
 // 📌 Επιστροφή όλων των φοιτητών
 router.get('/', getStudents);          // GET /api/students

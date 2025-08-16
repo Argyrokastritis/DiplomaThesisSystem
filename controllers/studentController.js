@@ -32,6 +32,20 @@ const getMyThesis = async (req, res) => {
   }
 };
 
+const getStudentProfile = async (req, res) => {
+  try {
+    const student = await Student.findById(req.user.id).select('-password');
+    if (!student) return res.status(404).json({ message: 'Φοιτητής δεν βρέθηκε.' });
+    res.json(student);
+  } catch (err) {
+    res.status(500).json({ message: 'Σφάλμα ανάκτησης προφίλ', error: err });
+  }
+};
+
+module.exports = {
+  // ...υπάρχουσες συναρτήσεις
+  getStudentProfile
+};
 
 
 // GET /api/students
@@ -85,4 +99,24 @@ const sendInvitation = async (req, res) => {
   }
 };
 
-module.exports = { getStudents, createStudent,sendInvitation,getMyThesis };
+const updateStudentProfile = async (req, res) => {
+  try {
+    const { email, phone, landline, address } = req.body;
+
+    const student = await Student.findById(req.user.id);
+    if (!student) return res.status(404).json({ message: 'Φοιτητής δεν βρέθηκε.' });
+
+    if (email) student.email = email;
+    if (phone) student.phone = phone;
+    if (landline) student.landline = landline;
+    if (address) student.address = address;
+
+    await student.save();
+    res.json({ message: '✅ Το προφίλ ενημερώθηκε επιτυχώς.' });
+  } catch (err) {
+    res.status(500).json({ message: '❌ Σφάλμα ενημέρωσης προφίλ.', error: err });
+  }
+};
+
+
+module.exports = { getStudents, createStudent,sendInvitation,getMyThesis, getStudentProfile, updateStudentProfile };
