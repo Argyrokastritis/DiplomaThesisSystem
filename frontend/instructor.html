@@ -5,17 +5,91 @@
   <title>Καθηγητής - Πίνακας Ελέγχου</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: Arial; padding: 20px; max-width: 800px; margin: auto; background-color: #f4f4f4; }
-    h2 { color: #333; }
-    input, textarea, button { width: 100%; padding: 10px; margin: 5px 0; }
-    .topic, .thesis { background: #fff; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; }
-    .section { margin-bottom: 40px; }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+      background: linear-gradient(135deg, #ece9e6, #ffffff);
+      color: #333;
+    }
+    h2 { color: #444; text-align: center; margin-bottom: 20px; }
+    h3 { color: #555; margin-bottom: 10px; }
+    input, textarea, button, select {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .section {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    .topic, .thesis {
+      background: #fafafa;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+    .topic button, .thesis button {
+      width: auto;
+      margin-top: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+    .search-box {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+  align-items: center;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.search-box button {
+  flex: 0;
+  padding: 8px 14px;
+  font-size: 14px;
+  background-color: #007BFF;
+  border-radius: 6px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.search-box button:hover {
+  background-color: #0056b3;
+}
+
   </style>
 </head>
 <body>
 
   <h2>👨‍🏫 Πίνακας Ελέγχου Καθηγητή</h2>
 
+  <!-- Δημιουργία νέου θέματος -->
   <div class="section">
     <h3>➕ Δημιουργία Θέματος Διπλωματικής</h3>
     <form id="topicForm">
@@ -26,104 +100,277 @@
     </form>
   </div>
 
+<!-- Αναζήτηση φοιτητή -->
+<div class="section">
+  <h3>🔍 Αναζήτηση Φοιτητή</h3>
+  <div class="search-box">
+    <input type="text" id="studentSearch" placeholder="Εισάγετε όνομα φοιτητή...">
+    <button type="button" onclick="searchStudent()">Αναζήτηση</button>
+  </div>
+  <div id="studentResults"></div>
+</div>
+
+<script>
+  async function searchStudent() {
+    const query = document.getElementById('studentSearch').value.trim();
+    if (!query) {
+      studentResults.innerHTML = "<p>⚠️ Πληκτρολογήστε όνομα φοιτητή.</p>";
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/students/search?name=${encodeURIComponent(query)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        throw new Error("Σφάλμα επικοινωνίας με τον server");
+      }
+
+      const students = await res.json();
+      studentResults.innerHTML = '';
+
+      if (students.length === 0) {
+        studentResults.innerHTML = "<p>❌ Δεν βρέθηκαν φοιτητές.</p>";
+        return;
+      }
+
+      students.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'topic';
+        div.innerHTML = `
+          <strong>👨‍🎓 ${s.name}</strong><br>
+          ΑΜ: ${s.am || '-'}<br>
+          Email: ${s.email || '-'}
+        `;
+        studentResults.appendChild(div);
+      });
+
+    } catch (err) {
+      console.error(err);
+      studentResults.innerHTML = "<p>❌ Σφάλμα κατά την αναζήτηση.</p>";
+    }
+  }
+
+  // ✅ Αναζήτηση και με Enter μέσα στο input
+  document.getElementById('studentSearch').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      searchStudent();
+    }
+  });
+</script>
+
+  <!-- Λίστα θεμάτων -->
   <div class="section">
     <h3>📋 Θέματα που έχω δημιουργήσει</h3>
     <div id="topicList"></div>
   </div>
 
+  <!-- Λίστα αναθέσεων -->
   <div class="section">
-    <h3>📚 Διπλωματικές στις οποίες συμμετέχω</h3>
-    <div id="thesisList"></div>
+    <h3>📚 Αναθέσεις</h3>
+    <div id="assignmentList"></div>
   </div>
 
   <script>
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Πρέπει να συνδεθείτε πρώτα.');
-      window.location.href = 'login.html';
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Πρέπει να συνδεθείτε πρώτα.');
+    window.location.href = 'login.html';
+  }
+
+  const searchInput = document.getElementById('studentSearch');
+  const studentResults = document.getElementById('studentResults');
+
+  let searchTimeout;
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    const query = searchInput.value.trim();
+
+    if (!query) {
+      studentResults.innerHTML = '';
+      return;
     }
 
-    const topicForm = document.getElementById('topicForm');
-    const topicList = document.getElementById('topicList');
-    const thesisList = document.getElementById('thesisList');
+    searchTimeout = setTimeout(() => searchStudent(query), 300);
+  });
 
-    // POST νέο θέμα
-    topicForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+  async function searchStudent(query) {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/students/search?name=${encodeURIComponent(query)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      const formData = new FormData();
-      formData.append('title', topicForm.title.value);
-      formData.append('summary', topicForm.summary.value);
-      if (topicForm.pdfFile.files.length > 0 && topicForm.pdfFile.files[0]) {
-        formData.append('pdf', topicForm.pdfFile.files[0]);
+      if (!res.ok) throw new Error("Σφάλμα επικοινωνίας με τον server");
+
+      const students = await res.json();
+      studentResults.innerHTML = '';
+
+      if (students.length === 0) {
+        studentResults.innerHTML = "<p>❌ Δεν βρέθηκαν φοιτητές.</p>";
+        return;
       }
 
-      const res = await fetch('http://localhost:5000/api/instructors/topics', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
+      const ul = document.createElement('ul');
+      ul.style.listStyle = "none";
+      ul.style.padding = "0";
+
+      students.forEach(s => {
+        const li = document.createElement('li');
+        li.style.padding = "6px";
+        li.style.borderBottom = "1px solid #ddd";
+        li.style.cursor = "pointer";
+
+        li.innerHTML = `👨‍🎓 <strong>${s.name}</strong> (${s.email || '-'})`;
+
+        li.onclick = () => {
+          alert(`Επιλέξατε τον φοιτητή: ${s.name}`);
+          searchInput.value = s.name;
+          studentResults.innerHTML = '';
+        };
+
+        ul.appendChild(li);
       });
 
-      if (res.ok) {
-        alert('✅ Το θέμα καταχωρήθηκε!');
-        topicForm.reset();
-        loadTopics();
-      } else {
-        const errorData = await res.json();
-        alert('❌ ' + (errorData.message || 'Σφάλμα κατά την καταχώρηση'));
-        console.log(errorData);
-      }
-    });
+      studentResults.appendChild(ul);
 
-    // GET θέματα καθηγητή
-    async function loadTopics() {
-  const res = await fetch('http://localhost:5000/api/instructors/topics', {
+    } catch (err) {
+      console.error(err);
+      studentResults.innerHTML = "<p>❌ Σφάλμα κατά την αναζήτηση.</p>";
+    }
+  }
+  // ✅ Εδώ βάλε τις συναρτήσεις
+  async function loadTopics() {
+    const res = await fetch('http://localhost:5000/api/instructors/topics', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const topics = await res.json();
+
+    const topicList = document.getElementById('topicList');
+    topicList.innerHTML = '';
+
+    if (Array.isArray(topics)) {
+      topics.forEach(t => {
+        const div = document.createElement('div');
+        div.className = 'topic';
+        div.innerHTML = `
+          <strong>${t.title}</strong><br>${t.summary}<br>
+          <button onclick="editTopic('${t._id}')">✏️ Επεξεργασία</button>
+          <button onclick="assignTopic('${t._id}')">📎 Ανάθεση</button>`;
+        topicList.appendChild(div);
+      });
+    } else {
+      topicList.innerHTML = 'Σφάλμα φόρτωσης θεμάτων.';
+      console.log('topics:', topics);
+    }
+  }
+
+  async function loadAssignments() {
+  const res = await fetch('http://localhost:5000/api/instructors/assignments', {
     headers: { Authorization: `Bearer ${token}` }
   });
-  const topics = await res.json();
 
-  topicList.innerHTML = '';
-  if (Array.isArray(topics)) {
-    topics.forEach(t => {
-      const div = document.createElement('div');
-      div.className = 'topic';
-      div.innerHTML = `
-  <strong>${t.title}</strong><br>${t.summary}<br>
-  <button onclick="editTopic('${t._id}')">✏️ Επεξεργασία</button>
-`;
-      topicList.appendChild(div);
+  const assignments = await res.json();
+  const assignmentList = document.getElementById('assignmentList');
+  assignmentList.innerHTML = '';
+
+  if (assignments.length === 0) {
+    assignmentList.innerHTML = '<p>📭 Δεν υπάρχουν ενεργές αναθέσεις.</p>';
+    return;
+  }
+
+  assignments.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'topic';
+    div.innerHTML = `
+      <strong>${a.title}</strong><br>
+      Ανατέθηκε σε: 👨‍🎓 ${a.assignedTo?.name || 'Άγνωστος'} (${a.assignedTo?.email || '-'})<br>
+      <button onclick="cancelAssignment('${a._id}')">🗑️ Ακύρωση Ανάθεσης</button>
+    `;
+    assignmentList.appendChild(div);
+  });
+}
+
+
+  async function assignTopic(topicId) {
+  const studentEmail = prompt("📧 Εισάγετε email φοιτητή για ανάθεση:");
+
+  if (!studentEmail) return;
+
+  try {
+    // Αναζήτηση φοιτητή με email
+    const resStudent = await fetch(`http://localhost:5000/api/students/search?email=${encodeURIComponent(studentEmail)}`, {
+      headers: { Authorization: `Bearer ${token}` }
     });
-  } else {
-    topicList.innerHTML = 'Σφάλμα φόρτωσης θεμάτων.';
-    console.log('topics:', topics);
+
+    const students = await resStudent.json();
+    if (students.length === 0) {
+      alert("❌ Δεν βρέθηκε φοιτητής με αυτό το email.");
+      return;
+    }
+
+    const studentId = students[0]._id;
+
+    // Ανάθεση θέματος
+    const resAssign = await fetch('http://localhost:5000/api/instructors/assign-topic', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ topicId, studentId })
+    });
+
+    const result = await resAssign.json();
+    if (resAssign.ok) {
+      alert("✅ Το θέμα ανατέθηκε προσωρινά!");
+      loadAssignments(); // προαιρετικά
+    } else {
+      alert("❌ Σφάλμα κατά την ανάθεση: " + result.message);
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ Σφάλμα επικοινωνίας με τον server.");
   }
 }
 
-    // GET διπλωματικές καθηγητή
-    async function loadTheses() {
-      const res = await fetch('http://localhost:5000/api/instructors/theses', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const theses = await res.json();
+async function cancelAssignment(topicId) {
+  if (!confirm("❓ Θέλετε σίγουρα να ακυρώσετε την ανάθεση;")) return;
 
-      thesisList.innerHTML = '';
-      theses.forEach(th => {
-        const div = document.createElement('div');
-        div.className = 'thesis';
-        div.innerHTML = `
-          <strong>Θέμα:</strong> ${th.topic.title}<br>
-          <strong>Φοιτητής:</strong> ${th.student.name}<br>
-          <strong>Κατάσταση:</strong> ${th.status}<br>
-        `;
-        thesisList.appendChild(div);
-      });
+  try {
+    const res = await fetch('http://localhost:5000/api/instructors/cancel-assignment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ topicId })
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      alert("✅ Η ανάθεση ακυρώθηκε.");
+      loadAssignments();
+    } else {
+      alert("❌ Σφάλμα: " + result.message);
     }
-    function editTopic(id) {
-      window.location.href = `edit-topic.html?id=${id}`;
-      }
+  } catch (err) {
+    console.error(err);
+    alert("❌ Σφάλμα επικοινωνίας με τον server.");
+  }
+}
+
+
+  function editTopic(id) {
+    window.location.href = `edit-topic.html?id=${id}`;
+  }
 
     loadTopics();
-    loadTheses();
+    loadAssignments();
   </script>
 
 </body>

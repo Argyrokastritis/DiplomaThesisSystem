@@ -40,7 +40,17 @@ const thesisSchema = new mongoose.Schema({
   },
   comments: {
     type: String
-  }
+  },
+  assignedTo: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Student' 
+  },
+  assignmentStatus: {
+  type: String,
+  enum: ['Unassigned', 'Pending', 'Confirmed'],
+  default: 'Unassigned'
+}
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Thesis', thesisSchema);

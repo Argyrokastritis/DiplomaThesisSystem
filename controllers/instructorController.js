@@ -1,4 +1,5 @@
 const Thesis = require('../models/Thesis');
+const Student = require('../models/Student');
 
 const getTopics = async (req, res) => {
   console.log('getTopics called');
@@ -17,6 +18,18 @@ const getTheses = async (req, res) => {
   // Επιστρέφει διπλωματικές στις οποίες συμμετέχει ο καθηγητής
   res.json([]); // προσωρινά κενό
 };
+
+const getAssignments = async (req, res) => {
+  try {
+    const assignments = await Thesis.find({ assignmentStatus: 'Pending' })
+      .populate('assignedTo', 'name email');
+
+    res.json(assignments);
+  } catch (err) {
+    res.status(500).json({ message: 'Σφάλμα ανάκτησης αναθέσεων', error: err });
+  }
+};
+
 
 const createTopic = async (req, res) => {
   console.log('createTopic called');
@@ -45,4 +58,30 @@ const createTopic = async (req, res) => {
   }
 };
 
-module.exports = { getTopics, getTheses, createTopic};
+const assignTopicToStudent = async (req, res) => {
+  const { topicId, studentId } = req.body;
+  const topic = await Thesis.findById(topicId);
+  topic.assignedTo = studentId;
+  topic.assignmentStatus = 'Pending';
+  await topic.save();
+  res.json({ message: 'Θέμα ανατέθηκε προσωρινά', topic });
+};
+
+const cancelAssignment = async (req, res) => {
+  const { topicId } = req.body;
+  const topic = await Thesis.findById(topicId);
+  topic.assignedTo = null;
+  topic.assignmentStatus = 'Unassigned';
+  await topic.save();
+  res.json({ message: 'Ανάθεση ακυρώθηκε' });
+};
+
+
+module.exports = {
+  getTopics,
+  getTheses,
+  createTopic,
+  assignTopicToStudent,
+  cancelAssignment,
+  getAssignments
+};
