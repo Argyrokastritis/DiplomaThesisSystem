@@ -5,15 +5,21 @@ const thesisSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  summary: {
+    type: String
+  },
+  pdf: {
+    type: String // path του αρχείου PDF
+  },
   student: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Student',
-    required: true
+    ref: 'Student'
+    // required: true // αν θέλεις να είναι υποχρεωτικό μόνο όταν ανατεθεί
   },
   supervisor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Instructor',
-    required: true
+    ref: 'Instructor'
+    // required: true
   },
   assignedDate: {
     type: Date,

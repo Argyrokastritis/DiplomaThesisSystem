@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>Επεξεργασία Θέματος</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 600px; margin: auto; background-color: #f4f4f4; }
+    input, textarea, button { width: 100%; padding: 10px; margin: 5px 0; }
+  </style>
+</head>
+<body>
+
+  <h2>✏️ Επεξεργασία Θέματος Διπλωματικής</h2>
+  <form id="editForm">
+    <input type="text" id="title" placeholder="Τίτλος Θέματος" required>
+    <textarea id="summary" placeholder="Σύντομη Περιγραφή" required></textarea>
+    <input type="file" id="pdfFile">
+    <button type="submit">Αποθήκευση Αλλαγών</button>
+  </form>
+
+  <script>
+    const token = localStorage.getItem('token');
+    const urlParams = new URLSearchParams(window.location.search);
+    const topicId = urlParams.get('id');
+
+    const form = document.getElementById('editForm');
+
+    // Φόρτωση υπάρχοντος θέματος
+    async function loadTopic() {
+      const res = await fetch(`http://localhost:5000/api/instructors/topics/${topicId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const topic = await res.json();
+      form.title.value = topic.title;
+      form.summary.value = topic.summary;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData();
+      formData.append('title', form.title.value);
+      formData.append('summary', form.summary.value);
+      if (form.pdfFile.files[0]) {
+        formData.append('pdf', form.pdfFile.files[0]);
+      }
+
+      const res = await fetch(`http://localhost:5000/api/instructors/topics/${topicId}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+
+      if (res.ok) {
+        alert('✅ Το θέμα ενημερώθηκε!');
+        window.location.href = 'instructor.html';
+      } else {
+        alert('❌ Σφάλμα κατά την ενημέρωση');
+      }
+    });
+
+    loadTopic();
+  </script>
+
+</body>
+</html>

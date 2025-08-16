@@ -54,7 +54,7 @@
       const formData = new FormData();
       formData.append('title', topicForm.title.value);
       formData.append('summary', topicForm.summary.value);
-      if (topicForm.pdfFile.files[0]) {
+      if (topicForm.pdfFile.files.length > 0 && topicForm.pdfFile.files[0]) {
         formData.append('pdf', topicForm.pdfFile.files[0]);
       }
 
@@ -69,25 +69,35 @@
         topicForm.reset();
         loadTopics();
       } else {
-        alert('❌ Σφάλμα κατά την καταχώρηση');
+        const errorData = await res.json();
+        alert('❌ ' + (errorData.message || 'Σφάλμα κατά την καταχώρηση'));
+        console.log(errorData);
       }
     });
 
     // GET θέματα καθηγητή
     async function loadTopics() {
-      const res = await fetch('http://localhost:5000/api/instructors/topics', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const topics = await res.json();
+  const res = await fetch('http://localhost:5000/api/instructors/topics', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const topics = await res.json();
 
-      topicList.innerHTML = '';
-      topics.forEach(t => {
-        const div = document.createElement('div');
-        div.className = 'topic';
-        div.innerHTML = `<strong>${t.title}</strong><br>${t.summary}<br>`;
-        topicList.appendChild(div);
-      });
-    }
+  topicList.innerHTML = '';
+  if (Array.isArray(topics)) {
+    topics.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'topic';
+      div.innerHTML = `
+  <strong>${t.title}</strong><br>${t.summary}<br>
+  <button onclick="editTopic('${t._id}')">✏️ Επεξεργασία</button>
+`;
+      topicList.appendChild(div);
+    });
+  } else {
+    topicList.innerHTML = 'Σφάλμα φόρτωσης θεμάτων.';
+    console.log('topics:', topics);
+  }
+}
 
     // GET διπλωματικές καθηγητή
     async function loadTheses() {
@@ -108,6 +118,9 @@
         thesisList.appendChild(div);
       });
     }
+    function editTopic(id) {
+      window.location.href = `edit-topic.html?id=${id}`;
+      }
 
     loadTopics();
     loadTheses();
